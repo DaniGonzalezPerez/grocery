@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almacén - Gestión de Productos</title>
+    <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1><span class="icon">🏪</span> <span>Almacén</span></h1>
+            <p>Gestión de productos</p>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="manage_products.html" class="active">
+                <span class="nav-icon">📦</span>
+                <span>Productos</span>
+            </a>
+            <a href="order.html">
+                <span class="nav-icon">🛒</span>
+                <span>Pedidos</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>Gestión de Productos</h2>
+                <p class="subtitle">Administra el catálogo del almacén</p>
+            </div>
+            <button class="btn-primary" onclick="openAddModal()">
+                <span>+</span> Nuevo Producto
+            </button>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Buscar productos...">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Unidad</th>
+                        <th>Precio</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Añadir Producto -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Nuevo Producto</h3>
+            <div class="form-group">
+                <label>Nombre del producto</label>
+                <input type="text" id="productName" placeholder="Ej: Leche entera">
+            </div>
+            <div class="form-group">
+                <label>Unidad de medida</label>
+                <select id="productUnit">
+                    <option value="ud">Unidad (ud)</option>
+                    <option value="kg">Kilogramo (kg)</option>
+                    <option value="litro">Litro</option>
+                    <option value="250g">250g</option>
+                    <option value="500g">500g</option>
+                    <option value="400g">400g</option>
+                    <option value="docena">Docena</option>
+                    <option value="lata">Lata</option>
+                    <option value="bote">Bote</option>
+                    <option value="450g">450g</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Precio unitario (€)</label>
+                <input type="number" id="productPrice" step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeAddModal()">Cancelar</button>
+                <button class="btn-primary" onclick="addProduct()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminación -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Eliminar producto</h3>
+            <p style="margin-bottom: 8px;">¿Estás seguro de que deseas eliminar este producto?</p>
+            <p id="deleteProductName" style="font-weight: 600; color: var(--danger); margin-bottom: 16px;"></p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-danger" style="padding: 10px 24px; font-size: 0.95rem;" onclick="confirmDelete()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/manage_products.js"></script>
+</body>
+</html>

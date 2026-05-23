@@ -1,0 +1,203 @@
+================================================================================
+  ALMACEN - REGISTRO DE CORRECCIONES Y ERRORES SOLUCIONADOS
+================================================================================
+
+Fecha: 22/05/2026
+
+
+--------------------------------------------------------------------------------
+1. NOMBRES DE COLUMNAS INCORRECTOS EN LAS CONSULTAS SQL
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  Las consultas SQL en orders_dao.py usaban nombres de columnas que no existian
+  en la base de datos real.
+
+  - Se usaba "fecha_pedido" pero la columna real se llama "fecha"
+  - Se usaba "subtotal" pero la columna real se llama "precio_total"
+
+  Esto provocaba el error de MySQL:
+    mysql.connector.errors.ProgrammingError: 1054 (42S22):
+    Unknown column 'p.fecha_pedido' in 'field list'
+
+SOLUCION:
+  Se consultaron los nombres reales de las columnas con DESCRIBE en cada tabla
+  y se corrigieron todas las referencias en orders_dao.py y en los archivos
+  JavaScript del frontend (order.js).
+
+  Archivos modificados:
+    - backend/orders_dao.py  (fecha_pedido -> fecha, subtotal -> precio_total)
+    - frontend/js/order.js   (mismos cambios en el renderizado)
+
+
+--------------------------------------------------------------------------------
+2. ERROR DE GROUP BY CON ONLY_FULL_GROUP_BY EN MYSQL 8
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  La consulta de pedidos agrupaba solo por id_pedido pero seleccionaba tambien
+  nombre_cliente, total y fecha. MySQL 8 tiene activado por defecto el modo
+  sql_mode=only_full_group_by, que exige que todas las columnas del SELECT
+  esten en el GROUP BY o sean funciones de agregacion.
+
+  Error exacto:
+    mysql.connector.errors.ProgrammingError: 1055 (42000):
+    Expression #2 of SELECT list is not in GROUP BY clause and contains
+    nonaggregated column 'almacen.p.nombre_cliente' which is not functionally
+    dependent on columns in GROUP BY clause
+
+SOLUCION:
+  Se anadieron todas las columnas no agregadas al GROUP BY:
+
+  ANTES:  GROUP BY p.id_pedido
+  AHORA:  GROUP BY p.id_pedido, p.nombre_cliente, p.total, p.fecha
+
+  Archivo modificado:
+    - backend/orders_dao.py
+
+
+--------------------------------------------------------------------------------
+3. PROMISE.ALL HACIA QUE UN FALLO EN PEDIDOS OCULTARA LOS PRODUCTOS
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  En dashboard.js se cargaban productos y pedidos con Promise.all().
+  Si el endpoint /getOrders fallaba (por los errores SQL anteriores),
+  Promise.all rechazaba TODA la promesa, incluyendo los productos que
+  si se habian cargado correctamente. El resultado era que la pagina
+  mostraba "No se pudo conectar con el servidor" aunque los productos
+  funcionaban perfectamente.
+
+SOLUCION:
+  Se separaron las llamadas en dos bloques try/catch independientes.
+  Primero se cargan los productos (y si falla, se muestra el error).
+  Luego se cargan los pedidos por separado (si falla, solo las
+  estadisticas de pedidos quedan vacias, pero los productos se muestran).
+
+  Archivo modificado:
+    - frontend/js/dashboard.js
+
+
+--------------------------------------------------------------------------------
+4. FECHAS MOSTRABAN "INVALID DATE"
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  La funcion formatDate() en common.js creaba un objeto Date con:
+    new Date(dateStr + 'T00:00:00')
+
+  El campo "fecha" en la base de datos es de tipo VARCHAR(45), no DATE.
+  Dependiendo del navegador, new Date() con ciertos formatos de string
+  devuelve "Invalid Date".
+
+SOLUCION:
+  Se reescribio formatDate() para que parsee el string directamente
+  sin depender de new Date(). Ahora separa el string "2025-04-01" por
+  guiones y usa un array de nombres de meses en espanol.
+
+  ANTES:  new Date(dateStr + 'T00:00:00').toLocaleDateString(...)
+  AHORA:  parts[2] + ' ' + meses[parseInt(parts[1]) - 1] + ' ' + parts[0]
+  RESULTADO: "01 abr 2025"
+
+  Archivo modificado:
+    - frontend/js/common.js
+
+
+--------------------------------------------------------------------------------
+5. PEDIDOS 4-15 NO TENIAN PRODUCTOS COMPRADOS
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  La tabla detalles_pedido solo contenia datos para los pedidos 1, 2 y 3.
+  Los pedidos del 4 al 15 tenian un total en euros pero cero lineas de
+  detalle, lo que significaba que aparecian con dinero gastado pero sin
+  ningun producto comprado. Al pulsar "Ver detalle" no salia nada.
+
+SOLUCION:
+  Se genero un script Python que creo detalles realistas para cada pedido
+  (entre 3 y 8 productos distintos con cantidades aleatorias). Despues se
+  actualizo el campo total de cada pedido para que coincida exactamente con
+  la suma de sus precio_total, asegurando consistencia en los datos.
+
+  Datos insertados directamente en la base de datos MySQL.
+
+
+--------------------------------------------------------------------------------
+6. CONEXION MYSQL NO VEIA DATOS NUEVOS (ISOLATION LEVEL)
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  Despues de insertar los detalles de los pedidos 4-15, el servidor Flask
+  seguia devolviendo 0 productos para esos pedidos. La API /getOrderDetails/4
+  devolvia un array vacio aunque los datos existian en la base de datos.
+
+  Causa: sql_connection.py usaba una conexion singleton (una sola conexion
+  reutilizada). MySQL usa por defecto el nivel de aislamiento REPEATABLE READ,
+  que mantiene una "foto" de los datos desde que empieza la transaccion.
+  Como los datos se insertaron desde otro proceso Python externo, la conexion
+  del servidor Flask no los veia porque su transaccion implicita empezo antes
+  de la insercion.
+
+SOLUCION:
+  Se modifico sql_connection.py para:
+  1. Anadir autocommit=True a la conexion, eliminando transacciones implicitas
+  2. Anadir comprobacion is_connected() para reconectar si la conexion se pierde
+
+  ANTES:
+    mysql.connector.connect(host="127.0.0.1", user="root", ...)
+
+  AHORA:
+    mysql.connector.connect(host="127.0.0.1", user="root", ..., autocommit=True)
+
+  Archivo modificado:
+    - backend/sql_connection.py
+
+
+--------------------------------------------------------------------------------
+7. VULNERABILIDAD DE SQL INJECTION EN DELETE
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  La funcion delete_products() en products_dao.py construia la consulta SQL
+  concatenando el parametro directamente en el string:
+
+    query = "DELETE FROM productos WHERE id_producto=" + str(id_producto)
+
+  Esto es vulnerable a inyeccion SQL.
+
+SOLUCION:
+  Se cambio a consulta parametrizada con placeholders %s:
+
+    cursor.execute("DELETE FROM productos WHERE id_producto = %s", (id_producto,))
+
+  Archivo modificado:
+    - backend/products_dao.py
+
+
+--------------------------------------------------------------------------------
+8. FLASK NO SERVIA EL FRONTEND (SOLO ERA API)
+--------------------------------------------------------------------------------
+
+PROBLEMA:
+  El servidor Flask original solo tenia el endpoint /getProducts. Para ver
+  la pagina habia que abrir el archivo HTML directamente con doble clic,
+  lo que usaba el protocolo file:// y las llamadas fetch a localhost:5000
+  fallaban por politicas de seguridad del navegador (CORS/mixed content).
+
+SOLUCION:
+  Se anadieron rutas en server.py para servir los archivos estaticos:
+    - /              -> index.html
+    - /*.html        -> paginas HTML
+    - /js/*          -> archivos JavaScript
+    - /ui/*          -> archivos CSS
+
+  Se anadio flask-cors y se cambio el host a 0.0.0.0 para aceptar
+  conexiones desde cualquier interfaz.
+
+  Ahora todo se accede desde http://localhost:5000
+
+  Archivo modificado:
+    - backend/server.py
+
+
+================================================================================

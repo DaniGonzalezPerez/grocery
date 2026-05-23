@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almacén - Pedidos</title>
+    <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1><span class="icon">🏪</span> <span>Almacén</span></h1>
+            <p>Gestión de productos</p>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="manage_products.html">
+                <span class="nav-icon">📦</span>
+                <span>Productos</span>
+            </a>
+            <a href="order.html" class="active">
+                <span class="nav-icon">🛒</span>
+                <span>Pedidos</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>Pedidos</h2>
+                <p class="subtitle">Historial de pedidos del almacén</p>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom: 28px;">
+            <div class="stat-card">
+                <div class="stat-icon orders">🛒</div>
+                <div class="stat-info">
+                    <h3 id="totalOrders">-</h3>
+                    <p>Total pedidos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon revenue">💰</div>
+                <div class="stat-info">
+                    <h3 id="totalRevenue">-</h3>
+                    <p>Ingresos totales</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon clients">📅</div>
+                <div class="stat-info">
+                    <h3 id="lastOrderDate">-</h3>
+                    <p>Último pedido</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Buscar por cliente...">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Pedido</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Detalles del Pedido -->
+    <div id="detailModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <h3 id="detailModalTitle">Detalle del Pedido</h3>
+            <p id="detailClientName" style="color: var(--text-light); margin-bottom: 16px;"></p>
+            <div class="table-container" style="box-shadow: none; border: 1px solid var(--border);">
+                <table class="order-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Unidad</th>
+                            <th>Cantidad</th>
+                            <th>Precio ud.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailTableBody"></tbody>
+                </table>
+            </div>
+            <div class="order-total-row">
+                <span>Total del pedido</span>
+                <span class="total-value" id="detailTotal"></span>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeDetailModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/order.js"></script>
+</body>
+</html>

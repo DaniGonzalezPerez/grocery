@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almacén - Dashboard</title>
+    <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1><span class="icon">🏪</span> <span>Almacén</span></h1>
+            <p>Gestión de productos</p>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html" class="active">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="manage_products.html">
+                <span class="nav-icon">📦</span>
+                <span>Productos</span>
+            </a>
+            <a href="order.html">
+                <span class="nav-icon">🛒</span>
+                <span>Pedidos</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>Dashboard</h2>
+                <p class="subtitle">Resumen general del almacén</p>
+            </div>
+            <button class="btn-primary" onclick="openAddModal()">
+                <span>+</span> Nuevo Producto
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon products">📦</div>
+                <div class="stat-info">
+                    <h3 id="totalProducts">-</h3>
+                    <p>Productos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orders">🛒</div>
+                <div class="stat-info">
+                    <h3 id="totalOrders">-</h3>
+                    <p>Pedidos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon revenue">💰</div>
+                <div class="stat-info">
+                    <h3 id="totalRevenue">-</h3>
+                    <p>Ingresos totales</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon clients">📅</div>
+                <div class="stat-info">
+                    <h3 id="lastOrderDate" style="font-size:1.1rem;">-</h3>
+                    <p>Último pedido</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-header" style="margin-top: 16px;">
+            <div>
+                <h2 style="font-size: 1.2rem;">Productos del almacén</h2>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Buscar productos...">
+            </div>
+            <button class="filter-btn active" data-category="todos">Todos</button>
+            <button class="filter-btn" data-category="lacteo">Lácteos</button>
+            <button class="filter-btn" data-category="panaderia">Panadería</button>
+            <button class="filter-btn" data-category="despensa">Despensa</button>
+            <button class="filter-btn" data-category="verdura">Verduras</button>
+        </div>
+
+        <div id="productsContainer" class="products-grid">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </main>
+
+    <!-- Modal Añadir Producto -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Nuevo Producto</h3>
+            <div class="form-group">
+                <label>Nombre del producto</label>
+                <input type="text" id="productName" placeholder="Ej: Leche entera">
+            </div>
+            <div class="form-group">
+                <label>Unidad de medida</label>
+                <select id="productUnit">
+                    <option value="ud">Unidad (ud)</option>
+                    <option value="kg">Kilogramo (kg)</option>
+                    <option value="litro">Litro</option>
+                    <option value="250g">250g</option>
+                    <option value="500g">500g</option>
+                    <option value="400g">400g</option>
+                    <option value="docena">Docena</option>
+                    <option value="lata">Lata</option>
+                    <option value="bote">Bote</option>
+                    <option value="450g">450g</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Precio unitario (€)</label>
+                <input type="number" id="productPrice" step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeAddModal()">Cancelar</button>
+                <button class="btn-primary" onclick="addProduct()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminación -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Eliminar producto</h3>
+            <p style="margin-bottom: 8px;">¿Estás seguro de que deseas eliminar este producto?</p>
+            <p id="deleteProductName" style="font-weight: 600; color: var(--danger); margin-bottom: 16px;"></p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-danger" style="padding: 10px 24px; font-size: 0.95rem;" onclick="confirmDelete()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
