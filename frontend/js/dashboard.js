@@ -1,5 +1,6 @@
 let allProducts = [];
 let allOrders = [];
+let stockMap = {};
 let currentFilter = 'todos';
 let deleteTargetId = null;
 
@@ -7,7 +8,6 @@ async function init() {
     try {
         allProducts = await fetchAPI('/getProducts');
         document.getElementById('totalProducts').textContent = allProducts.length;
-        renderProducts(allProducts);
     } catch (e) {
         document.getElementById('productsContainer').innerHTML =
             '<div class="empty-state"><div class="empty-icon">⚠️</div>' +
@@ -30,6 +30,52 @@ async function init() {
     } catch (e) {
         console.error('Error cargando pedidos:', e);
     }
+
+    // Cargar stock
+    try {
+        const stockData = await fetchAPI('/getStock');
+        stockMap = {};
+        stockData.forEach(s => { stockMap[s.id_producto] = s.stock_actual; });
+        renderProducts(allProducts);
+        checkLowStock(stockData);
+    } catch (e) {
+        renderProducts(allProducts);
+        console.error('Error cargando stock:', e);
+    }
+}
+
+function checkLowStock(stockData) {
+    const lowStock = stockData.filter(s => s.stock_actual < 20);
+    const container = document.getElementById('stockAlerts');
+
+    if (lowStock.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML =
+        '<div class="stock-alert-box">' +
+        '<div class="stock-alert-header">' +
+        '<span>⚠️ Alerta de stock bajo — Se necesita pedido de reposición</span>' +
+        '</div>' +
+        '<div class="stock-alert-list">' +
+        lowStock.map(s =>
+            `<div class="stock-alert-item">` +
+            `<span class="stock-alert-name">${s.nombre}</span>` +
+            `<span class="stock-badge stock-critical">${s.stock_actual} ${s.unidad_medida}</span>` +
+            `</div>`
+        ).join('') +
+        '</div></div>';
+}
+
+function getStockLabel(id_producto, unidad) {
+    const stock = stockMap[id_producto];
+    if (stock === undefined) return '';
+    let cls = 'stock-ok';
+    if (stock < 20) cls = 'stock-critical';
+    else if (stock < 50) cls = 'stock-warning';
+    return `<span class="stock-badge ${cls}">${stock} ${unidad}</span>`;
 }
 
 function renderProducts(products) {
@@ -54,6 +100,7 @@ function renderProducts(products) {
                 <p class="unit">${p.unidad_medida}</p>
                 <div class="price-row">
                     <span class="price">${formatPrice(p.precio_unidad)} <span>/ ${p.unidad_medida}</span></span>
+                    ${getStockLabel(p.id_producto, p.unidad_medida)}
                 </div>
             </div>
         `;
@@ -145,5 +192,8 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
         filterProducts();
     });
 });
+
+// Refrescar cada 30 segundos
+setInterval(init, 30000);
 
 init();

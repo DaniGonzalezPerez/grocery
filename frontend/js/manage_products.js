@@ -1,15 +1,31 @@
 let allProducts = [];
+let stockMap = {};
 let deleteTargetId = null;
 
 async function init() {
     try {
-        allProducts = await fetchAPI('/getProducts');
+        const [products, stock] = await Promise.all([
+            fetchAPI('/getProducts'),
+            fetchAPI('/getStock')
+        ]);
+        allProducts = products;
+
+        stockMap = {};
+        stock.forEach(s => { stockMap[s.id_producto] = s.stock_actual; });
+
         renderTable(allProducts);
     } catch (e) {
         document.getElementById('productsTableBody').innerHTML =
-            '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div>' +
+            '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠️</div>' +
             '<p>No se pudo conectar con el servidor</p></div></td></tr>';
     }
+}
+
+function getStockBadge(stock) {
+    if (stock === undefined || stock === null) return '<span class="stock-badge stock-unknown">-</span>';
+    if (stock < 20) return `<span class="stock-badge stock-critical">${stock}</span>`;
+    if (stock < 50) return `<span class="stock-badge stock-warning">${stock}</span>`;
+    return `<span class="stock-badge stock-ok">${stock}</span>`;
 }
 
 function renderTable(products) {
@@ -17,19 +33,21 @@ function renderTable(products) {
 
     if (products.length === 0) {
         tbody.innerHTML =
-            '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div>' +
+            '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📦</div>' +
             '<p>No se encontraron productos</p></div></td></tr>';
         return;
     }
 
     tbody.innerHTML = products.map(p => {
         const cat = getCategory(p.nombre);
+        const stock = stockMap[p.id_producto];
         return `
             <tr>
                 <td><strong>#${p.id_producto}</strong></td>
                 <td>${p.nombre}</td>
                 <td>${p.unidad_medida}</td>
                 <td><strong>${formatPrice(p.precio_unidad)}</strong></td>
+                <td>${getStockBadge(stock)}</td>
                 <td><span class="card-badge ${cat.class}" style="position:static;">${cat.name}</span></td>
                 <td>
                     <button class="btn-danger" onclick="openDeleteModal(${p.id_producto}, '${p.nombre.replace(/'/g, "\\'")}')">
@@ -103,5 +121,8 @@ async function confirmDelete() {
         showToast('Error al eliminar el producto', true);
     }
 }
+
+// Refrescar stock cada 30 segundos
+setInterval(init, 30000);
 
 init();

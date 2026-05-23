@@ -629,6 +629,82 @@ body {
     background: var(--danger);
 }
 
+/* ── Stock Badges ── */
+.stock-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stock-ok {
+    background: #d8f3dc;
+    color: #1b4332;
+}
+
+.stock-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stock-critical {
+    background: #fce4ec;
+    color: #c62828;
+    animation: pulse-stock 2s infinite;
+}
+
+.stock-unknown {
+    background: var(--border);
+    color: var(--text-light);
+}
+
+@keyframes pulse-stock {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ── Stock Alert Box ── */
+.stock-alert-box {
+    background: #fff5f5;
+    border: 2px solid #e63946;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.stock-alert-header {
+    background: #e63946;
+    color: white;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.stock-alert-list {
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.stock-alert-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #fcc;
+    font-size: 0.85rem;
+}
+
+.stock-alert-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
     .sidebar {

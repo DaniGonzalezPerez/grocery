@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import products_dao
 import orders_dao
+import stock_dao
 from sql_connection import get_sql_connection
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +24,7 @@ def get_products():
 def insert_product():
     producto = request.get_json()
     id_producto = products_dao.insert_new_product(conexion, producto)
+    stock_dao.init_stock_for_product(conexion, id_producto)
     return jsonify({'id_producto': id_producto})
 
 @app.route('/deleteProduct/<int:id_producto>', methods=['DELETE'])
@@ -44,7 +46,20 @@ def get_order_details(id_pedido):
 def insert_order():
     pedido = request.get_json()
     id_pedido = orders_dao.insert_order(conexion, pedido)
+    for detalle in pedido.get('detalles', []):
+        stock_dao.update_stock_after_order(conexion, detalle['id_producto'], detalle['cantidad'])
     return jsonify({'id_pedido': id_pedido})
+
+@app.route('/getStock', methods=['GET'])
+def get_stock():
+    stock = stock_dao.get_all_stock(conexion)
+    return jsonify(stock)
+
+@app.route('/getLowStock', methods=['GET'])
+def get_low_stock():
+    umbral = request.args.get('umbral', 20, type=int)
+    alertas = stock_dao.get_low_stock(conexion, umbral)
+    return jsonify(alertas)
 
 @app.route('/')
 def serve_index():
