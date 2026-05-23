@@ -4,20 +4,22 @@ let deleteTargetId = null;
 
 async function init() {
     try {
-        const [products, stock] = await Promise.all([
-            fetchAPI('/getProducts'),
-            fetchAPI('/getStock')
-        ]);
-        allProducts = products;
-
-        stockMap = {};
-        stock.forEach(s => { stockMap[s.id_producto] = s.stock_actual; });
-
+        allProducts = await fetchAPI('/getProducts');
         renderTable(allProducts);
     } catch (e) {
         document.getElementById('productsTableBody').innerHTML =
             '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠️</div>' +
             '<p>No se pudo conectar con el servidor</p></div></td></tr>';
+        return;
+    }
+
+    try {
+        const stock = await fetchAPI('/getStock');
+        stockMap = {};
+        stock.forEach(s => { stockMap[s.id_producto] = s.stock_actual; });
+        renderTable(allProducts);
+    } catch (e) {
+        console.error('Error cargando stock:', e);
     }
 }
 

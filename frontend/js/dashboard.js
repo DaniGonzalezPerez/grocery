@@ -8,6 +8,7 @@ async function init() {
     try {
         allProducts = await fetchAPI('/getProducts');
         document.getElementById('totalProducts').textContent = allProducts.length;
+        renderProducts(allProducts);
     } catch (e) {
         document.getElementById('productsContainer').innerHTML =
             '<div class="empty-state"><div class="empty-icon">⚠️</div>' +
@@ -15,33 +16,25 @@ async function init() {
         return;
     }
 
-    try {
-        allOrders = await fetchAPI('/getOrders');
-        document.getElementById('totalOrders').textContent = allOrders.length;
-
-        const totalRevenue = allOrders.reduce((sum, o) => sum + o.total, 0);
+    // Pedidos y stock cargan en paralelo sin bloquear los productos
+    fetchAPI('/getOrders').then(orders => {
+        allOrders = orders;
+        document.getElementById('totalOrders').textContent = orders.length;
+        const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
         document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue);
-
-        if (allOrders.length > 0) {
-            const lastDate = allOrders.reduce((latest, o) =>
-                o.fecha > latest ? o.fecha : latest, allOrders[0].fecha);
+        if (orders.length > 0) {
+            const lastDate = orders.reduce((latest, o) =>
+                o.fecha > latest ? o.fecha : latest, orders[0].fecha);
             document.getElementById('lastOrderDate').textContent = formatDate(lastDate);
         }
-    } catch (e) {
-        console.error('Error cargando pedidos:', e);
-    }
+    }).catch(e => console.error('Error cargando pedidos:', e));
 
-    // Cargar stock
-    try {
-        const stockData = await fetchAPI('/getStock');
+    fetchAPI('/getStock').then(stockData => {
         stockMap = {};
         stockData.forEach(s => { stockMap[s.id_producto] = s.stock_actual; });
         renderProducts(allProducts);
         checkLowStock(stockData);
-    } catch (e) {
-        renderProducts(allProducts);
-        console.error('Error cargando stock:', e);
-    }
+    }).catch(e => console.error('Error cargando stock:', e));
 }
 
 function checkLowStock(stockData) {
