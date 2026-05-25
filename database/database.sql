@@ -3,7 +3,9 @@
 --  Crea la base de datos, tablas y datos
 -- ============================================
 
-CREATE DATABASE IF NOT EXISTS almacen
+DROP DATABASE IF EXISTS almacen;
+
+CREATE DATABASE almacen
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_0900_ai_ci;
 
