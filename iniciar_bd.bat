@@ -55,10 +55,10 @@ if %errorlevel%==0 (
     echo.
     echo   Base de datos: %DB_NAME%
     echo   Tablas creadas:
-    echo     - productos       (19 productos)
-    echo     - pedidos         (15 pedidos)
-    echo     - detalles_pedido (detalles de cada pedido)
-    echo     - stock           (stock de cada producto)
+    echo     - productos       ^(19 productos^)
+    echo     - pedidos         ^(15 pedidos^)
+    echo     - detalles_pedido ^(detalles de cada pedido^)
+    echo     - stock           ^(stock de cada producto^)
     echo.
     echo   Ya puedes ejecutar iniciar.bat
     echo.
