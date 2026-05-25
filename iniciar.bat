@@ -5,6 +5,14 @@ echo    Almacen - Iniciando servidor...
 echo ========================================
 echo.
 
+:: Comprobar .env
+if not exist "%~dp0.env" (
+    echo ERROR: No se encontro el archivo .env
+    echo Copia .env.example a .env y configura tus credenciales.
+    pause
+    exit /b 1
+)
+
 cd /d "%~dp0backend"
 
 echo Verificando dependencias...
