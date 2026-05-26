@@ -78,6 +78,8 @@ def serve_ui(filename):
     return send_from_directory(UI_DIR, filename)
 
 if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
     print("Starting Python Flask server for Grocery Store")
-    print("Abre http://localhost:5000 en tu navegador")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"Abre http://localhost:{port} en tu navegador")
+    app.run(host='0.0.0.0', port=port, debug=debug)

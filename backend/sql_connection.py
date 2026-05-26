@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 import mysql.connector
 
 __conexion = None
@@ -16,14 +17,33 @@ def _load_env():
 
 _load_env()
 
+def _parse_database_url(url):
+    """Parsea DATABASE_URL (mysql://user:pass@host:port/dbname)."""
+    parsed = urlparse(url)
+    return {
+        'host': parsed.hostname or '127.0.0.1',
+        'port': parsed.port or 3306,
+        'user': parsed.username or 'root',
+        'password': parsed.password or '',
+        'database': parsed.path.lstrip('/') or 'almacen',
+    }
+
 def get_sql_connection():
     global __conexion
     if __conexion is None or not __conexion.is_connected():
-        __conexion = mysql.connector.connect(
-            host=os.environ.get('DB_HOST', '127.0.0.1'),
-            user=os.environ.get('DB_USER', 'root'),
-            password=os.environ.get('DB_PASSWORD', ''),
-            database=os.environ.get('DB_NAME', 'almacen'),
-            autocommit=True
-        )
+        database_url = os.environ.get('DATABASE_URL')
+        if database_url:
+            config = _parse_database_url(database_url)
+        else:
+            config = {
+                'host': os.environ.get('DB_HOST', '127.0.0.1'),
+                'user': os.environ.get('DB_USER', 'root'),
+                'password': os.environ.get('DB_PASSWORD', ''),
+                'database': os.environ.get('DB_NAME', 'almacen'),
+            }
+
+        if os.environ.get('DB_SSL', '').lower() == 'true':
+            config['ssl_disabled'] = False
+
+        __conexion = mysql.connector.connect(**config, autocommit=True)
     return __conexion
